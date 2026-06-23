@@ -1,0 +1,12 @@
+pandas
+requests
+python-dotenv
+google-cloud-storage
+google-cloud-bigquery
+pyarrow
+isodate
+python-dateutil
+click>=8.1.7
+spacy==3.8.7
+scikit-learn
+db-dtypes

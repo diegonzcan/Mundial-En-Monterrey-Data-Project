@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mundial Trend Radar</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #09111f;
+      --surface: #111c2d;
+      --surface-2: #162337;
+      --surface-3: #1b2b42;
+      --ink: #eef5ff;
+      --muted: #9fb0c7;
+      --faint: #6f829d;
+      --line: rgba(167, 190, 220, 0.17);
+      --accent: #39d6b5;
+      --accent-2: #6aa8ff;
+      --accent-3: #f2c14e;
+      --good: #4ade80;
+      --bad: #fb7185;
+      --flat: #a7b3c6;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: linear-gradient(180deg, #0c1421 0%, var(--bg) 44%, #070d17 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      padding: 18px 0 26px;
+    }
+
+    .brand-kicker,
+    .section-kicker {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      margin-top: 10px;
+      font-size: clamp(42px, 7vw, 76px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 720px;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 19px;
+      line-height: 1.55;
+    }
+
+    .freshness {
+      display: grid;
+      gap: 12px;
+      justify-items: end;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 9px 12px;
+      border: 1px solid rgba(57, 214, 181, 0.38);
+      border-radius: 999px;
+      background: rgba(57, 214, 181, 0.12);
+      color: #bdf9ec;
+      font-weight: 800;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 5px rgba(57, 214, 181, 0.12);
+    }
+
+    .error-banner {
+      display: none;
+      margin: 0 0 20px;
+      padding: 14px 16px;
+      border: 1px solid rgba(251, 113, 133, 0.35);
+      border-radius: 14px;
+      background: rgba(251, 113, 133, 0.1);
+      color: #ffd2da;
+      line-height: 1.45;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .kpi-grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      margin: 12px 0 24px;
+    }
+
+    .section-grid {
+      grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.65fr);
+      align-items: stretch;
+    }
+
+    .two-col {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015)), var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .kpi {
+      min-height: 132px;
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+      line-height: 1.3;
+    }
+
+    .kpi-value {
+      margin-top: 14px;
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    .kpi-note {
+      margin-top: 10px;
+      color: var(--faint);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .methodology-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .methodology-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .methodology-item {
+      display: grid;
+      gap: 6px;
+      min-height: 96px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .methodology-item strong {
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .methodology-item span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      margin-top: 5px;
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: 18px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .panel-copy {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .chart-shell {
+      position: relative;
+      min-height: 420px;
+    }
+
+    .share-shell {
+      position: relative;
+      min-height: 310px;
+    }
+
+    canvas {
+      width: 100% !important;
+    }
+
+    .empty-state {
+      display: grid;
+      min-height: 160px;
+      place-items: center;
+      padding: 26px;
+      border: 1px dashed rgba(167, 190, 220, 0.22);
+      border-radius: 14px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 14px 13px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.035);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .topic-name {
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .change-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .change-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .change-meta {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .change-value {
+      display: grid;
+      gap: 5px;
+      justify-items: end;
+      min-width: 132px;
+      font-weight: 850;
+    }
+
+    .positive {
+      color: var(--good);
+    }
+
+    .negative {
+      color: var(--bad);
+    }
+
+    .neutral {
+      color: var(--flat);
+    }
+
+    .tag {
+      display: inline-flex;
+      width: fit-content;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(106, 168, 255, 0.12);
+      color: #cfe2ff;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .topic-drilldown {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .drilldown-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .drilldown-title {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .ghost-button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 7px 10px;
+    }
+
+    .subtopic-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .subtopic-row {
+      min-height: 74px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .subtopic-row strong {
+      display: block;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .subtopic-row span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .comment-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .comment-list li {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .video-topic {
+      margin-top: 16px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .video-topic:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(190px, 1fr));
+      gap: 14px;
+      margin-top: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .video-card {
+      display: grid;
+      min-width: 190px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: linear-gradient(135deg, rgba(57, 214, 181, 0.14), rgba(106, 168, 255, 0.12)), var(--surface-3);
+    }
+
+    .video-body {
+      display: grid;
+      gap: 9px;
+      padding: 12px;
+    }
+
+    .video-title {
+      display: -webkit-box;
+      min-height: 42px;
+      overflow: hidden;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.35;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .video-channel,
+    .video-stats,
+    .keywords {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .youtube-link {
+      display: inline-flex;
+      justify-content: center;
+      padding: 9px 10px;
+      border-radius: 11px;
+      background: rgba(57, 214, 181, 0.12);
+      color: #c7fff2;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    footer {
+      padding: 28px 0 10px;
+      color: var(--faint);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 1180px) {
+      .kpi-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .section-grid,
+      .two-col,
+      .methodology-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        padding: 18px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .freshness {
+        justify-items: start;
+        text-align: left;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        display: block;
+      }
+
+      .chart-shell {
+        min-height: 340px;
+      }
+
+      .change-card {
+        grid-template-columns: 1fr;
+      }
+
+      .change-value {
+        justify-items: start;
+      }
+
+      .subtopic-list {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <div class="brand-kicker">YouTube Mundial 2026</div>
+        <h1>Mundial Trend Radar</h1>
+        <p class="subtitle">Conversación digital sobre el Mundial 2026</p>
+      </div>
+      <div class="freshness">
+        <div class="status-pill"><span class="status-dot"></span>Datos actualizados</div>
+        <div>
+          <strong>Último corte:</strong> <span id="latestRunDate">Sin datos</span><br />
+          <strong>Generado:</strong> <span id="generatedAt">Sin datos</span>
+        </div>
+      </div>
+    </header>
+
+    <div id="errorBanner" class="error-banner"></div>
+
+    <main>
+      <section id="kpis" class="grid kpi-grid"></section>
+
+      <section class="card panel methodology-panel">
+        <div>
+          <div class="section-kicker">Extracción</div>
+          <h2>Lectura local de la conversación</h2>
+          <p class="panel-copy">
+            El radar monitorea videos públicos de YouTube relacionados con el Mundial 2026 y prioriza señales que ayudan a entender qué temas están presentes en la conversación digital alrededor de Monterrey. Los cortes diarios se interpretan con referencia horaria de Monterrey, por lo que el día mostrado representa la ventana local usada por el pipeline.
+          </p>
+        </div>
+        <div class="methodology-grid">
+          <div class="methodology-item">
+            <strong>Referencia geográfica</strong>
+            <span>Monterrey y su conversación asociada al Mundial 2026.</span>
+          </div>
+          <div class="methodology-item">
+            <strong>Fuente</strong>
+            <span>Información pública disponible en YouTube.</span>
+          </div>
+          <div class="methodology-item">
+            <strong>Corte diario</strong>
+            <span>Fechas y comparaciones alineadas al día local de Monterrey.</span>
+          </div>
+          <div class="methodology-item">
+            <strong>Temas</strong>
+            <span>Agregados desde la capa Gold del pipeline; esta página solo visualiza datos ya procesados.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid section-grid">
+        <article class="card panel">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Evolución</div>
+              <h2>Temas más relevantes en el tiempo</h2>
+              <p id="mainChartCopy" class="panel-copy">Comentarios por tema en la ventana disponible.</p>
+            </div>
+          </div>
+          <div id="topicsChartState" class="chart-shell">
+            <canvas id="topicsOverTimeChart"></canvas>
+          </div>
+          <div id="topicDrilldown" class="topic-drilldown"></div>
+        </article>
+
+        <article class="card panel">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Hoy</div>
+              <h2>Participación de conversación hoy</h2>
+              <p class="panel-copy">Distribución de comentarios por tema.</p>
+            </div>
+          </div>
+          <div id="topicShareState" class="share-shell">
+            <canvas id="topicShareChart"></canvas>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid two-col" style="margin-top:16px;">
+        <article class="card panel">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Cambio vs día anterior</div>
+              <h2>Cambios vs día anterior</h2>
+            </div>
+          </div>
+          <div id="topicChanges"></div>
+        </article>
+
+        <article class="card panel">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">Ranking</div>
+              <h2>Temas más comentados hoy</h2>
+            </div>
+          </div>
+          <div id="topTopics"></div>
+        </article>
+      </section>
+
+      <section class="card panel" style="margin-top:16px;">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Contexto</div>
+            <h2>Videos que explican la conversación</h2>
+            <p class="panel-copy">Videos asociados a los temas relevantes del día.</p>
+          </div>
+        </div>
+        <div id="videosByTopic"></div>
+      </section>
+
+      <section class="card panel" style="margin-top:16px;">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Canales</div>
+            <h2>Canales con mayor conversación</h2>
+          </div>
+        </div>
+        <div id="topChannels"></div>
+      </section>
+    </main>
+
+    <footer>
+      Información pública disponible en YouTube. Visualización estática generada para monitoreo de conversación.
+    </footer>
+  </div>
+
+  <script>
+    const chartInstances = {};
+    const loadWarnings = [];
+    let selectedMacroTopicId = null;
+    let cachedMacroEvolution = null;
+    let cachedSubTopicEvolution = null;
+    let cachedTopSubTopics = [];
+
+    const palette = [
+      "#39d6b5",
+      "#6aa8ff",
+      "#f2c14e",
+      "#fb7185",
+      "#a78bfa",
+      "#34d399",
+      "#f97316",
+      "#22d3ee",
+      "#f472b6",
+      "#cbd5e1"
+    ];
+
+    async function fetchJson(path, fallback) {
+      try {
+        const response = await fetch(path, { cache: "no-store" });
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+        return await response.json();
+      } catch (error) {
+        loadWarnings.push(path);
+        console.warn(`No se pudo cargar ${path}:`, error);
+        return fallback;
+      }
+    }
+
+    function num(value) {
+      return Number(value ?? 0);
+    }
+
+    function formatNumber(value) {
+      if (value === null || value === undefined || value === "") return "0";
+      return num(value).toLocaleString("es-MX", { maximumFractionDigits: 1 });
+    }
+
+    function formatPercent(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return "0%";
+      return num(value).toLocaleString("es-MX", { style: "percent", maximumFractionDigits: 1 });
+    }
+
+    function formatDate(value) {
+      if (!value) return "Sin datos";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+      return date.toLocaleDateString("es-MX", { year: "numeric", month: "short", day: "2-digit" });
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "Sin datos";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleString("es-MX", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function signedNumber(value) {
+      const number = num(value);
+      if (number > 0) return `+${formatNumber(number)}`;
+      if (number < 0) return `-${formatNumber(Math.abs(number))}`;
+      return "0";
+    }
+
+    function changeClass(value) {
+      const number = num(value);
+      if (number > 0) return "positive";
+      if (number < 0) return "negative";
+      return "neutral";
+    }
+
+    function changeLabel(value) {
+      const number = num(value);
+      if (number > 0) return "Más conversación";
+      if (number < 0) return "Menos conversación";
+      return "Sin cambio";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function safeUrl(value) {
+      if (!value) return "";
+      try {
+        const url = new URL(value, window.location.origin);
+        if (url.protocol === "https:" || url.protocol === "http:") return url.href;
+      } catch (error) {
+        return "";
+      }
+      return "";
+    }
+
+    function renderEmptyState(container, message) {
+      const element = typeof container === "string" ? document.getElementById(container) : container;
+      if (!element) return;
+      element.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+    }
+
+    function destroyChart(id) {
+      if (chartInstances[id]) {
+        chartInstances[id].destroy();
+        delete chartInstances[id];
+      }
+    }
+
+    function setErrorBanner() {
+      const banner = document.getElementById("errorBanner");
+      if (!loadWarnings.length) {
+        banner.style.display = "none";
+        return;
+      }
+
+      banner.style.display = "block";
+      banner.textContent = `Algunos archivos de datos todavía no están disponibles: ${loadWarnings.join(", ")}. Las secciones afectadas se muestran vacías.`;
+    }
+
+    function renderHeader(metadata) {
+      document.getElementById("latestRunDate").textContent = metadata.latest_run_date || "Sin datos";
+      document.getElementById("generatedAt").textContent = formatDateTime(metadata.generated_at);
+    }
+
+    function renderKpis(summary) {
+      const kpis = [
+        ["Videos monitoreados", formatNumber(summary.videos_monitored)],
+        ["Canales monitoreados", formatNumber(summary.channels_monitored)],
+        ["Comentarios disponibles", formatNumber(summary.comments_available)],
+        ["Temas detectados", formatNumber(summary.topics_detected)],
+        ["Tema más comentado", summary.top_topic_name || "Sin datos", `${formatNumber(summary.top_topic_comments)} comentarios`],
+        ["Canal con más vistas", summary.top_channel_title || "Sin datos", `${formatNumber(summary.top_channel_views)} vistas`]
+      ];
+
+      document.getElementById("kpis").innerHTML = kpis.map(([label, value, note]) => `
+        <article class="card kpi">
+          <div class="kpi-label">${escapeHtml(label)}</div>
+          <div class="kpi-value">${escapeHtml(value)}</div>
+          ${note ? `<div class="kpi-note">${escapeHtml(note)}</div>` : ""}
+        </article>
+      `).join("");
+    }
+
+    function truncateText(value, maxLength = 175) {
+      const text = String(value || "").replace(/\s+/g, " ").trim();
+      if (text.length <= maxLength) return text;
+      return `${text.slice(0, maxLength - 1).trim()}…`;
+    }
+
+    function parseSampleComments(value) {
+      if (!value) return [];
+      if (Array.isArray(value)) return value.filter(Boolean).slice(0, 3);
+      return String(value)
+        .split(" | ")
+        .map(comment => comment.trim())
+        .filter(Boolean)
+        .slice(0, 3);
+    }
+
+    function flattenSubTopics(topSubTopics, macroTopicId = null) {
+      return (topSubTopics || [])
+        .filter(group => !macroTopicId || group.macro_topic_id === macroTopicId)
+        .flatMap(group => (group.sub_topics || []).map(subTopic => ({
+          ...subTopic,
+          macro_topic_id: group.macro_topic_id,
+          macro_topic_name: group.macro_topic_name
+        })))
+        .sort((a, b) =>
+          num(b.total_comments) - num(a.total_comments) ||
+          num(b.total_views) - num(a.total_views)
+        );
+    }
+
+    function renderSubTopicsSection(topSubTopics) {
+      const container = document.getElementById("topicDrilldown");
+      const selectedMacro = selectedMacroTopicId
+        ? (topSubTopics || []).find(group => group.macro_topic_id === selectedMacroTopicId)
+        : null;
+      const subTopics = flattenSubTopics(topSubTopics, selectedMacroTopicId).slice(0, 6);
+      const title = selectedMacro
+        ? `Sub-temas destacados · ${selectedMacro.macro_topic_name || selectedMacro.macro_topic_id}`
+        : "Sub-temas destacados";
+
+      if (!subTopics.length) {
+        container.innerHTML = `
+          <div class="drilldown-head">
+            <div class="drilldown-title">${escapeHtml(title)}</div>
+            ${selectedMacro ? `<button id="clearTopicDrilldown" class="ghost-button" type="button">Ver todos</button>` : ""}
+          </div>
+          <div class="empty-state">No hay sub-temas disponibles todavía.</div>
+        `;
+        const clearButton = document.getElementById("clearTopicDrilldown");
+        if (clearButton) {
+          clearButton.addEventListener("click", () => {
+            selectedMacroTopicId = null;
+            renderSubTopicsSection(cachedTopSubTopics);
+          });
+        }
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="drilldown-head">
+          <div class="drilldown-title">${escapeHtml(title)}</div>
+          ${selectedMacro ? `<button id="clearTopicDrilldown" class="ghost-button" type="button">Ver todos</button>` : ""}
+        </div>
+        <div class="subtopic-list">
+          ${subTopics.map(row => {
+            const comments = parseSampleComments(row.sample_comments);
+            return `
+            <div class="subtopic-row">
+              <strong>${escapeHtml(row.sub_topic_name || row.sub_topic_id)}</strong>
+              <span>${escapeHtml(row.macro_topic_name || row.macro_topic_id)}</span>
+              ${row.keywords ? `<span>${escapeHtml(row.keywords)}</span>` : ""}
+              <span>${formatNumber(row.videos_count)} videos · ${formatNumber(row.total_comments)} comentarios · ${formatNumber(row.total_views)} vistas</span>
+              ${comments.length ? `
+                <ul class="comment-list">
+                  ${comments.map(comment => `<li>${escapeHtml(truncateText(comment))}</li>`).join("")}
+                </ul>
+              ` : `<span>Sin comentarios representativos todavía.</span>`}
+            </div>
+          `}).join("")}
+        </div>
+      `;
+
+      const clearButton = document.getElementById("clearTopicDrilldown");
+      if (clearButton) {
+        clearButton.addEventListener("click", () => {
+          selectedMacroTopicId = null;
+          renderSubTopicsSection(cachedTopSubTopics);
+        });
+      }
+    }
+
+    function renderTopicsOverTime(data, subTopicData = { macros: [] }, topSubTopics = []) {
+      destroyChart("topicsOverTimeChart");
+      const container = document.getElementById("topicsChartState");
+      cachedMacroEvolution = data;
+      cachedSubTopicEvolution = subTopicData;
+      cachedTopSubTopics = topSubTopics;
+
+      const topics = data.topics || [];
+
+      document.getElementById("mainChartCopy").textContent =
+        `Comentarios por macro tema desde ${data.start_date || "el primer corte disponible"}. Haz clic en una línea para filtrar sub-temas.`;
+
+      renderSubTopicsSection(topSubTopics);
+
+      if (!topics.length) {
+        renderEmptyState(container, "No hay datos suficientes para mostrar temas en el tiempo.");
+        return;
+      }
+
+      container.innerHTML = '<canvas id="topicsOverTimeChart"></canvas>';
+
+      const labels = Array.from(new Set(topics.flatMap(topic => (topic.series || []).map(row => row.run_date)))).sort();
+      const datasets = topics.map((topic, index) => {
+        const byDate = new Map((topic.series || []).map(row => [row.run_date, row]));
+        return {
+          label: topic.topic_name || topic.topic_id,
+          topic_id: topic.topic_id,
+          data: labels.map(date => {
+            const row = byDate.get(date);
+            return row ? {
+              x: date,
+              y: num(row.total_comments),
+              total_views: row.total_views,
+              videos_count: row.videos_count
+            } : null;
+          }),
+          borderColor: palette[index % palette.length],
+          backgroundColor: palette[index % palette.length],
+          borderWidth: 3,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          tension: 0.28,
+          spanGaps: true
+        };
+      });
+
+      chartInstances.topicsOverTimeChart = new Chart(document.getElementById("topicsOverTimeChart"), {
+        type: "line",
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          onClick: (_, elements) => {
+            if (!elements.length) return;
+            const dataset = datasets[elements[0].datasetIndex];
+            if (!dataset?.topic_id) return;
+            selectedMacroTopicId = dataset.topic_id;
+            renderSubTopicsSection(cachedTopSubTopics);
+          },
+          interaction: { mode: "nearest", intersect: false },
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { color: "#c7d3e6", boxWidth: 10, boxHeight: 10, usePointStyle: true }
+            },
+            tooltip: {
+              callbacks: {
+                title: items => items[0]?.label || "",
+                label: item => `${item.dataset.label}: ${formatNumber(item.parsed.y)} comentarios`,
+                afterLabel: item => {
+                  const raw = item.raw || {};
+                  return [`Vistas: ${formatNumber(raw.total_views)}`, `Videos: ${formatNumber(raw.videos_count)}`];
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: "rgba(167, 190, 220, 0.08)" },
+              ticks: { color: "#9fb0c7", maxRotation: 0, autoSkip: true }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: "rgba(167, 190, 220, 0.1)" },
+              ticks: { color: "#9fb0c7", callback: value => formatNumber(value) }
+            }
+          }
+        }
+      });
+    }
+    function renderTopicShare(rows) {
+      destroyChart("topicShareChart");
+      const container = document.getElementById("topicShareState");
+
+      if (!rows.length) {
+        renderEmptyState(container, "No hay datos de participación de conversación para hoy.");
+        return;
+      }
+
+      container.innerHTML = '<canvas id="topicShareChart"></canvas>';
+
+      chartInstances.topicShareChart = new Chart(document.getElementById("topicShareChart"), {
+        type: "doughnut",
+        data: {
+          labels: rows.map(row => row.topic_name || row.topic_id),
+          datasets: [{
+            data: rows.map(row => num(row.total_comments)),
+            backgroundColor: rows.map((_, index) => palette[index % palette.length]),
+            borderColor: "#111c2d",
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: "62%",
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { color: "#c7d3e6", boxWidth: 10, boxHeight: 10, usePointStyle: true }
+            },
+            tooltip: {
+              callbacks: {
+                label: item => {
+                  const row = rows[item.dataIndex];
+                  return `${row.topic_name}: ${formatPercent(row.share_of_comments)} · ${formatNumber(row.total_comments)} comentarios`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderTopicChanges(rows) {
+      const container = document.getElementById("topicChanges");
+      if (!rows.length) {
+        renderEmptyState(container, "No hay cambios disponibles para comparar con el día anterior.");
+        return;
+      }
+
+      container.innerHTML = `<div class="change-list">${rows.map(row => `
+        <article class="change-card">
+          <div>
+            <div class="topic-name">${escapeHtml(row.topic_name || row.topic_id)}</div>
+            <div class="change-meta">
+              ${formatNumber(row.total_comments)} comentarios · ${formatNumber(row.total_views)} vistas · ${formatNumber(row.videos_count)} videos
+            </div>
+          </div>
+          <div class="change-value">
+            <span class="${changeClass(row.comments_change)}">${signedNumber(row.comments_change)} comentarios</span>
+            <span class="${changeClass(row.views_change)}">${signedNumber(row.views_change)} vistas</span>
+            <span class="tag">${changeLabel(row.comments_change)}</span>
+          </div>
+        </article>
+      `).join("")}</div>`;
+    }
+
+    function renderTopTopics(rows) {
+      const container = document.getElementById("topTopics");
+      if (!rows.length) {
+        renderEmptyState(container, "No hay temas para mostrar hoy.");
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Tema</th>
+                <th>Videos</th>
+                <th>Comentarios</th>
+                <th>Vistas</th>
+                <th>Comentarios/video</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(row => `
+                <tr>
+                  <td>${formatNumber(row.rank)}</td>
+                  <td class="topic-name">${escapeHtml(row.topic_name || row.topic_id)}</td>
+                  <td>${formatNumber(row.videos_count)}</td>
+                  <td>${formatNumber(row.total_comments)}</td>
+                  <td>${formatNumber(row.total_views)}</td>
+                  <td>${formatNumber(row.avg_comments_per_video)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderVideosByTopic(groups) {
+      const container = document.getElementById("videosByTopic");
+      if (!groups.length) {
+        renderEmptyState(container, "No hay videos asociados a los temas relevantes.");
+        return;
+      }
+
+      container.innerHTML = groups.map(group => `
+        <section class="video-topic">
+          <h3>${escapeHtml(group.topic_name || group.topic_id)}</h3>
+          <div class="video-grid">
+            ${(group.videos || []).slice(0, 5).map(video => {
+              const thumbnailUrl = safeUrl(video.thumbnail_url);
+              const videoUrl = safeUrl(video.video_url);
+
+              return `
+              <article class="video-card">
+                <img class="thumb" src="${escapeHtml(thumbnailUrl)}" alt="" loading="lazy" onerror="this.removeAttribute('src')" />
+                <div class="video-body">
+                  <div class="video-title">${escapeHtml(video.title || "Video sin título")}</div>
+                  <div class="video-channel">${escapeHtml(video.channel_title || "Canal no disponible")}</div>
+                  <div class="video-stats">${formatNumber(video.view_count)} vistas · ${formatNumber(video.comment_count)} comentarios</div>
+                  ${video.sub_topic_name ? `<div class="tag">${escapeHtml(video.sub_topic_name)}</div>` : ""}
+                  <div class="keywords">${escapeHtml(video.topic_keywords || video.matched_source || "Coincidencia no disponible")}</div>
+                  ${videoUrl ? `<a class="youtube-link" href="${escapeHtml(videoUrl)}" target="_blank" rel="noopener noreferrer">Ver en YouTube</a>` : ""}
+                </div>
+              </article>
+            `}).join("")}
+          </div>
+        </section>
+      `).join("");
+    }
+
+    function renderTopChannels(rows) {
+      const container = document.getElementById("topChannels");
+      if (!rows.length) {
+        renderEmptyState(container, "No hay canales para mostrar.");
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Canal</th>
+                <th>Videos</th>
+                <th>Comentarios</th>
+                <th>Vistas</th>
+                <th>Suscriptores</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(row => `
+                <tr>
+                  <td>${formatNumber(row.rank)}</td>
+                  <td class="topic-name">${escapeHtml(row.channel_title || row.channel_id)}</td>
+                  <td>${formatNumber(row.videos_count)}</td>
+                  <td>${formatNumber(row.total_comments)}</td>
+                  <td>${formatNumber(row.total_views)}</td>
+                  <td>${formatNumber(row.subscriber_count)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function main() {
+      const [
+        metadata,
+        summary,
+        topicsOverTime,
+        subTopicsOverTime,
+        topSubTopicsByMacro,
+        topicShare,
+        topicChanges,
+        topTopics,
+        videosByTopic,
+        channels
+      ] = await Promise.all([
+        fetchJson("data/latest_metadata.json", {}),
+        fetchJson("data/dashboard_summary.json", {}),
+        fetchJson("data/relevant_topics_over_time.json", { window_days: 30, metric: "total_comments", topics: [] }),
+        fetchJson("data/sub_topics_over_time.json", { window_days: 30, metric: "total_comments", macros: [] }),
+        fetchJson("data/top_sub_topics_by_macro.json", []),
+        fetchJson("data/topic_share_today.json", []),
+        fetchJson("data/topic_changes_today.json", []),
+        fetchJson("data/top_topics_today.json", []),
+        fetchJson("data/top_videos_by_topic.json", []),
+        fetchJson("data/channel_daily.json", [])
+      ]);
+
+      setErrorBanner();
+      renderHeader(metadata);
+      renderKpis(summary);
+      renderTopicsOverTime(topicsOverTime, subTopicsOverTime, topSubTopicsByMacro);
+      renderTopicShare(topicShare);
+      renderTopicChanges(topicChanges);
+      renderTopTopics(topTopics);
+      renderVideosByTopic(videosByTopic);
+      renderTopChannels(channels);
+    }
+
+    main().catch(error => {
+      console.error(error);
+      document.getElementById("errorBanner").style.display = "block";
+      document.getElementById("errorBanner").textContent = "No se pudo cargar el dashboard. Revisa los archivos JSON generados.";
+    });
+  </script>
+</body>
+</html>

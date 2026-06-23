@@ -1,0 +1,36 @@
+.env
+.env.*
+!.env.example
+
+# Google Cloud local credentials
+credentials/
+src/credentials/
+*credentials*.json
+*service-account*.json
+*service_account*.json
+*private-key*.json
+
+# Generated data and caches
+data/
+cache/
+apps/data/*.json
+src/dashboard/data/*.json
+!apps/data/.gitkeep
+!src/dashboard/data/.gitkeep
+*.parquet
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

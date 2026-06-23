@@ -1,0 +1,4 @@
+[build]
+  base = "apps"
+  command = "echo 'No build'"
+  publish = "."
