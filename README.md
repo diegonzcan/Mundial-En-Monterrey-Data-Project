@@ -1,6 +1,6 @@
 # Mundial Trend Radar Monterrey
 
-Proyecto de portafolio para monitorear conversaciones publicas en YouTube sobre la Copa Mundial FIFA 2026 en Monterrey. El repositorio contiene un pipeline de datos en Python, capas de transformacion en BigQuery, modelado jerarquico de temas y un dashboard estatico que puede desplegarse sin exponer credenciales de nube en el navegador.
+Proyecto de portafolio para monitorear conversaciones publicas en YouTube sobre la Copa Mundial FIFA 2026 en Monterrey. El repositorio contiene un pipeline de datos en Python, capas de transformacion en BigQuery, modelado jerarquico de temas y un dashboard estatico que puede desplegarse.
 
 ![Arquitectura e infraestructura](docs/architecture-infrastructure.svg)
 
@@ -8,7 +8,7 @@ Proyecto de portafolio para monitorear conversaciones publicas en YouTube sobre 
 
 - Busca videos publicos recientes de YouTube relacionados con el Mundial y Monterrey.
 - Extrae metadatos publicos de videos, comentarios principales y metadatos de canales.
-- Guarda snapshots Parquet particionados por `run_date` de forma local y, opcionalmente, los sube a Google Cloud Storage.
+- Guarda snapshots Parquet particionados por `run_date` y los sube a Google Cloud Storage.
 - Carga los snapshots crudos en BigQuery y construye capas analiticas Raw, Silver y Gold.
 - Detecta macro temas y sub-temas a partir del texto de videos y comentarios seleccionados.
 - Exporta archivos JSON listos para un dashboard estatico construido con Chart.js.
@@ -86,80 +86,6 @@ Los archivos DDL estan en `src/load/sql/` y usan solamente nombres placeholder p
 
 Antes de ejecutar los DDL, reemplaza placeholders como `your_project.your_gold_dataset.table_name` por tu propio proyecto y datasets de GCP.
 
-## Instalacion Local
-
-Crea y activa un entorno virtual:
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-python -m spacy download es_core_news_sm
-```
-
-En macOS o Linux:
-
-```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python -m spacy download es_core_news_sm
-```
-
-Crea un archivo local `.env` a partir de la plantilla publica:
-
-```bash
-copy .env.example .env
-```
-
-En macOS o Linux:
-
-```bash
-cp .env.example .env
-```
-
-Variables de entorno requeridas:
-
-```env
-YOUTUBE_API_KEY=replace_with_your_youtube_api_key
-GCP_PROJECT_ID=your-gcp-project-id
-GCS_BUCKET_NAME=your-gcs-bucket-name
-GOOGLE_APPLICATION_CREDENTIALS=src/credentials/service-account.json
-```
-
-Mantén `.env` y los archivos JSON de service account fuera del control de versiones. El `.gitignore` incluido bloquea rutas comunes de credenciales, datos generados y caches.
-
-## Comandos Utiles
-
-Ejecutar el pipeline completo:
-
-```bash
-python src/pipeline.py
-```
-
-Procesar temas para una fecha:
-
-```bash
-python src/transform/topic_gold.py --run-date 2026-06-15
-```
-
-Hacer backfill de temas:
-
-```bash
-python src/transform/topic_gold.py --start-date 2026-06-15 --end-date 2026-06-20
-```
-
-Regenerar JSON del dashboard:
-
-```bash
-python src/dashboard/generate_dashboard_json.py
-```
-
-Regenerar JSON del dashboard para una ventana explicita:
-
-```bash
-python src/dashboard/generate_dashboard_json.py --start-date 2026-06-15 --end-date 2026-06-20
-```
 
 ## Despliegue
 
@@ -210,11 +136,4 @@ src/
     topic_gold.py
 requirements.txt
 netlify.toml
-```
-
-## Notas De Privacidad Y Seguridad
-
-- El pipeline usa datos publicos de YouTube, pero los archivos Parquet y JSON generados pueden contener nombres de autores, comentarios, identificadores de canales, payloads crudos de API o rutas de infraestructura.
-- Los datos generados, caches, credenciales, archivos `.env` locales y logs se ignoran en Git.
-- El dashboard del navegador usa JSON estatico y nunca consulta BigQuery directamente.
-- Antes de publicar un despliegue real, revisa los terminos de la YouTube API, las expectativas de retencion de datos y si los comentarios publicos deben agregarse o anonimizarse para tu caso de uso.
+```s
