@@ -1,6 +1,6 @@
 # Mundial Trend Radar Monterrey
 
-Proyecto de portafolio para monitorear conversaciones publicas en YouTube sobre la Copa Mundial FIFA 2026 en Monterrey. El repositorio contiene un pipeline de datos en Python, capas de transformacion en BigQuery, modelado jerarquico de temas y un dashboard estatico que puede desplegarse.
+Proyecto de portafolio para monitorear conversaciones publicas en YouTube sobre la Copa Mundial FIFA 2026 en Monterrey. El repositorio contiene un pipeline de datos en Python, capas de transformacion en BigQuery, modelado jerarquico de temas y un dashboard estatico que puede desplegarse. El pipeline es automatizado mediante GitHub Actions y desplegado en Netlify. 
 
 ![Arquitectura e infraestructura](docs/architecture-infrastructure.svg)
 
